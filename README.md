@@ -1,25 +1,71 @@
-<span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:10px;font-size:18px;line-height:1;">🤖</span> Influencer Discovery & Outreach Agent (LD LATTE)
-Интеллектуальный AI-агент для автоматизированного поиска, валидации и персонализированного аутрича fashion-блогеров для бартерного сотрудничества.
-<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;"></span> Что это
-Автоматизированный пайплайн, который закрывает полный цикл работы с инфлюенсерами: от загрузки базы "идеальных" профилей до генерации готовых черновиков персональных офферов. Система использует гибридный подход: анализ существующей базы через парсинг + поиск новых кандидатов через официальные API с многоуровневой валидацией.
-Бизнес-кейс для LD LATTE: Замена 4-6 часов ручной рутины маркетолога (поиск, проверка активности, написание писем) на 2 минуты работы скрипта. Повышение конверсии в ответ за счет гипер-персонализации по модели PASTA.
-<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">✨</span> Ключевые особенности и инженерные решения
-<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;"></span> Graceful Degradation (Изящная деградация): При блокировке парсинга Instagram (HTTP 429/403) система не падает, а автоматически переключается на валидированные mock-данные, гарантируя завершение пайплайна.
-<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;"></span> Официальные API вместо "серого" парсинга: Для поиска новых кандидатов используется YouTube Data API v3. Это гарантирует 100% легальность, стабильность и отсутствие капч.
-<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;"></span> Многоуровневая валидация (Validation Pipeline): Кандидаты отсеиваются по жестким критериям: подписчики 3K–500K, дата последнего видео < 90 дней, наличие описания.
-<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;"></span> Defensive Programming для LLM: Использование Pydantic V2 с кастомными @field_validator для автоматического исправления "галлюцинаций" формата JSON от языковой модели.
-<span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;"></span> Модель оффера PASTA: Генерация текстов по проверенной маркетинговой структуре (Personalization, Authority, Story, Terms, Action), а не шаблонных "спама".
-<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;"></span> Быстрый старт (Демо)
-Проект развернут в Google Colab для мгновенной демонстрации без настройки локального окружения. Все артефакты сохраняются на Google Disk.
-Откройте Google Colab Notebook.
-Вставьте ваши API-ключи (GROQ_API_KEY, YOUTUBE_API_KEY) в соответствующие ячейки.
-Загрузите файл session.txt (cookie Instagram) при запросе.
-Запустите все ячейки последовательно (Runtime -> Run all).
-Результаты: Все артефакты сохранены в /content/drive/MyDrive/InfluencerFinder_Demo/artifacts/:
-parsed_profiles.json (20 реальных профилей)
-ideal_portrait.json (Синтезированный портрет)
-youtube_outreach_offers.xlsx (Готовые офферы для 2 реальных каналов)
-<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">⚙️</span> Архитектура пайплайна
+# <span style="display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:10px;font-size:18px;line-height:1;">🤖</span> Influencer Discovery & Outreach Agent (LD LATTE)
+
+> Интеллектуальный AI-агент для автоматизированного поиска, валидации и персонализированного аутрича fashion-блогеров для бартерного сотрудничества.
+
+[![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)](https://python.org)
+[![LLM](https://img.shields.io/badge/LLM-Groq_Llama_3.3_70B-orange)](https://groq.com)
+[![API](https://img.shields.io/badge/API-YouTube_Data_v3-red?logo=youtube)](https://developers.google.com/youtube/v3)
+[![Validation](https://img.shields.io/badge/Validation-Pydantic_V2-brightgreen)](https://docs.pydantic.dev)
+[![Architecture](https://img.shields.io/badge/Pattern-Circuit_Breaker-blue)]()
+
+---
+
+## <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">🎯</span> Что это
+
+Production-ready пайплайн, который закрывает полный цикл работы с инфлюенсерами: от загрузки базы "идеальных" профилей до генерации готовых черновиков персональных офферов. Система использует гибридный подход: анализ существующей базы через парсинг + поиск новых кандидатов через официальные API с многоуровневой валидацией.
+
+**Бизнес-кейс для LD LATTE:** Замена 4-6 часов ручной рутины маркетолога (поиск, проверка активности, написание писем) на 2 минуты работы скрипта. Повышение конверсии в ответ за счет гипер-персонализации по модели PASTA.
+
+---
+
+## <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">✨</span> Ключевые особенности
+
+- <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;">🛡️</span> **Graceful Degradation:** При блокировке парсинга Instagram (HTTP 429/403) система не падает, а автоматически переключается на валидированные mock-данные, гарантируя завершение пайплайна.
+- <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;">🔌</span> **Официальные API:** Для поиска новых кандидатов используется YouTube Data API v3. Это гарантирует 100% легальность, стабильность и отсутствие капч.
+- <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;">🔍</span> **Validation Pipeline:** Кандидаты отсеиваются по жестким критериям: подписчики 3K–500K, дата последнего видео < 90 дней, наличие описания.
+- <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;">⚙️</span> **Defensive Programming:** Использование `Pydantic V2` с кастомными `@field_validator` для автоматического исправления "галлюцинаций" формата JSON от языковой модели.
+- <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:14px;line-height:1;">📝</span> **Модель оффера PASTA:** Генерация текстов по проверенной маркетинговой структуре (Personalization, Authority, Story, Terms, Action).
+
+---
+
+## <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">📂</span> Структура проекта и Артефакты
+
+Проект организован по принципам модульности. Все исходные коды, промпты и результаты сохранены на Google Диске в директории `/content/drive/MyDrive/InfluencerFinder_Demo/`.
+
+```text
+InfluencerFinder_Demo/
+│
+├── 📂 app/                          # Исходный код (только финальные, рабочие версии)
+│   ├── 01_init_and_setup.py         # Инициализация, зависимости, Pydantic-модели, LLM-клиенты
+│   ├── 02_load_and_parse_instagram.py # Умная загрузка Excel + парсер с Circuit Breaker
+│   ├── 03_generate_ideal_portrait.py  # Анализ базы и синтез портрета (строгий JSON-шаблон)
+│   ├── 04_youtube_search_and_validate.py # Поиск через YouTube API + многоуровневая валидация
+│   └── 05_generate_pasta_offers_and_save.py # Генерация офферов по модели PASTA и экспорт
+│
+├── 📂 prompts/                      # Инженерные промпты (Prompt Engineering)
+│   ├── 01_ideal_portrait_generation.md # Промпт для выявления паттернов и синтеза портрета
+│   ├── 02_search_queries_generation.md # Промпт для генерации SEO-запросов с учетом текущего года
+│   └── 03_pasta_outreach_offer.md      # Промпт для генерации персонализированного оффера (PASTA)
+│
+└── 📂 artifacts/                    # Результаты работы пайплайна (сохраняются автоматически)
+    ├── parsed_profiles.json         # Данные 20 успешно спарсенных профилей Instagram
+    ├── ideal_portrait.json          # Сгенерированный "Портрет идеального блогера"
+    ├── found_youtube_channels.json  # Список валидированных YouTube-каналов
+    └── youtube_outreach_offers.xlsx # Финальная таблица с готовыми текстами офферов
+
+
+<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">🚀</span> Быстрый старт
+Проект развернут в Google Colab для мгновенной демонстрации без настройки локального окружения.
+## Вариант 1: Запуск в Google Colab (Рекомендуется для демо)
+- Откройте Google Colab Notebook.
+- Вставьте ваши API-ключи (GROQ_API_KEY, YOUTUBE_API_KEY) в ячейку инициализации.
+- Загрузите файл session.txt (cookie Instagram) при запросе.
+- Запустите все ячейки последовательно (Runtime -> Run all).
+- Результат: Все артефакты автоматически сохранятся в папку artifacts/ на вашем Google Диске.
+
+## Вариант 2: Локальный запуск (из папки app/)
+### 1. Настройка окружения
+
 ```
                       [Excel с базой "идеальных" блогеров]
                                       │
