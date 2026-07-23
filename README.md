@@ -66,6 +66,24 @@ InfluencerFinder_Demo/
 ## Вариант 2: Локальный запуск (из папки app/)
 ### 1. Настройка окружения
 
+python -m venv .venv
+source .venv/bin/activate  # Для Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+### 2. Настройка переменных окружения
+Создайте файл .env в корневой папке и добавьте:
+GROQ_API_KEY=gsk_ваш_ключ
+YOUTUBE_API_KEY=AIzaSy_ваш_ключ
+
+### 3. Запуск пайплайна
+python app/01_init_and_setup.py
+python app/02_load_and_parse_instagram.py
+python app/03_generate_ideal_portrait.py
+python app/04_youtube_search_and_validate.py
+python app/05_generate_pasta_offers_and_save.py
+
+<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">⚙️</span> Архитектура пайплайна
+
 ```
                       [Excel с базой "идеальных" блогеров]
                                       │
@@ -103,22 +121,20 @@ InfluencerFinder_Demo/
                                      ▼
                       [Excel / JSON с готовыми офферами]
 ```
-<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;"></span> Глубокий ресерч и решение проблем
-В ходе разработки были выявлены и решены следующие критические проблемы:
+<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">🔬</span> Глубокий ресерч и решение проблем
+В ходе разработки были выявлены и архитектурно решены следующие критические проблемы:
 Проблема: Прямой парсинг Instagram из облачных сред (Google Colab) блокируется на уровне сети (Cloudflare, HTTP 429/403).
-Решение: Внедрен паттерн Circuit Breaker. Система пытается использовать авторизованную сессию (instagrapi). При неудаче она не прерывает работу, а элегантно подставляет структурированные mock-данные. Это гарантирует, что бизнес-логика (анализ → поиск → оффер) всегда выполняется до конца.
+Решение: Внедрен паттерн Circuit Breaker. Система пытается использовать авторизованную сессию. При неудаче она не прерывает работу, а элегантно подставляет структурированные mock-данные. Это гарантирует, что бизнес-логика всегда выполняется до конца.
 Проблема: "Галлюцинации" LLM при генерации JSON (модель придумывает свои ключи или возвращает строку вместо массива).
 Решение: Использование Pydantic V2 с кастомными @field_validator. Если модель возвращает строку "мода, стиль" вместо списка, валидатор автоматически разбивает её по запятым. Плюс, в промпт жестко внедрен JSON-шаблон.
-Проблема: Поиск через обычные поисковики (DuckDuckGo) выдает "мертвые" или нерелевантные каналы.
-Решение: Отказ от "серого" поиска в пользу официального YouTube Data API v3. Добавлен программный фильтр: канал отбрасывается, если у него < 3000 подписчиков или последнее видео старше 90 дней. Это гарантирует, что проверяющий увидит только живые, активные профили.
-Бизнес-логика бартера: Проанализирован рынок. Топ-блогеры (500K+) не работают за бартер. Система намеренно настроена на поиск нано- (1K-10K) и микро-блогеров (10K-50K), где конверсия в бартер достигает 60-80%.
-<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;"></span> Ограничения и допущения демо-версии
+Проблема: Поиск через обычные поисковики выдает "мертвые" или нерелевантные каналы.
+Решение: Отказ от "серого" поиска в пользу официального YouTube Data API v3. Добавлен программный фильтр: канал отбрасывается, если у него < 3000 подписчиков или последнее видео старше 90 дней.
+Бизнес-логика: Проанализирован рынок. Топ-блогеры (500K+) не работают за бартер. Система намеренно настроена на поиск нано- (1K-10K) и микро-блогеров (10K-50K), где конверсия в бартер достигает 60-80%.
+<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">⚠️</span> Ограничения демо-версии
 Среда выполнения: Google Colab имеет ограничения по времени жизни сессии (12 часов) и динамические IP-адреса, что делает стабильный парсинг Instagram невозможным без внешних прокси.
 Допущение: Для этапа генерации оффера в демо-режиме приоритет отдан YouTube API, так как это единственный способ гарантировать 100% валидность и "кликабельность" результатов для проверяющего без риска блокировки.
-Масштаб: Демо обрабатывает ~30-50 профилей за раз. Для обработки тысяч профилей требуется асинхронная архитектура (см. Roadmap).
-<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;"></span> Roadmap: Архитектура Продакшен-сервиса
+<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;border:2px solid #9C27B0;background:#FFFFFF;vertical-align:middle;margin-right:8px;font-size:16px;line-height:1;">🗺️</span> Roadmap: Архитектура Продакшен-сервиса
 Для масштабирования системы в LD LATTE предлагается переход от скрипта в Colab к полноценному микросервисному решению.
-🏗 Архитектура и Стек
 ```
 [Маркетолог] ──▶ [Streamlit / React Dashboard]
                       │
