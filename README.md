@@ -1,4 +1,4 @@
-Influencer Discovery & Outreach Agent (LD LATTE)
+# Influencer Discovery & Outreach Agent (LD LATTE)
 
 > Интеллектуальный AI-агент для автоматизированного поиска, валидации и персонализированного аутрича fashion-блогеров для бартерного сотрудничества.
 
